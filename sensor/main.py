@@ -1,64 +1,23 @@
+# coding: utf8
+
 from microbit import *
 import radio
-import time
+from time import *
 
-#29 caractères max on s'assure toujours que le message est inférieur a 232 bit (29 caractères )
+# 22 caractères max on s'assure toujours que le message est inférieur a 176 bits (22 caractères)
 msg = "(1,1,1)(2,2,2)(3,3,3)(4,4,4)(5,5,5)(6,6,6)(7,7,7)(8,8,8)"
 
+lenMsg = len(msg)
+
+print('Msg fait ', lenMsg, 'caractères') 
 
 radio.on()
-while True:
+while not button_b.is_pressed():
     if button_a.is_pressed():
-        subMsgStartIndex = 0
-        
-        # message decomposition
-        
-        nbMsg = len(msg)//28
-        print("nbMsg", nbMsg )
-        
-        for i in range(nbMsg):
-            subMsgEndIndex = (i + 1) * 28
-            print(subMsgStartIndex)
-            print(subMsgEndIndex)
-            
-
-            subMsg = msg[subMsgStartIndex:subMsgEndIndex]
+        for i in range(0, len(msg)-1, 22):
+            subMsg = msg[i:i+22]
+            while len(subMsg) < 22 :
+                subMsg+='#' # padding
+            sleep(1)
             print(subMsg)
-            subMsgStartIndex = subMsgEndIndex
-            
-
-    # Ajout dun entete au message 
-    sleep(2)
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+            print('subMsg fait ', len(subMsg), 'caractères') 
