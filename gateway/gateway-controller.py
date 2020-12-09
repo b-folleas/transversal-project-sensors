@@ -5,19 +5,20 @@ radio.on()
 radio.config(channel=1)  # Setting channel for communication
 radio.config(power=7)
 
-def radio_handle(msg):
-    sensor_pin = msg[0:1]
-    packet_id = msg[2:3]
-    flag = msg[4:7]
-    data = msg[8:]
+def radio_handle(packet):
+    print(packet) # debug to check if the packet
+    sensor_pin = packet[0:1]
+    packet_id = packet[2:3]
+    flag = packet[4:7]
+    data = packet[8:]
 
     if flag == 'SYN':
         radio.send('ACK') # packet sending process continue
     elif flag == 'PSH':
-        display.scroll(data)
+        print(data)
         # continuer communication avec sensor -> check sensor_pin
     elif flag == 'FIN':
-        display.scroll(data)
+        print(data)
         # arreter communication avec sensor -> pret à accepter un nouveau syn
     elif flag == 'RST':
         radio.send('RST')
@@ -26,8 +27,20 @@ def radio_handle(msg):
         print('Error : Unauthorized Flag.')
 
 while True:
-    msg = radio.receive()
-    try:
-        radio_handle(msg)
-    except ValueError:
-        display.scroll('Error : No message received.')
+    packet = radio.receive()
+
+    if (packet != None):
+        radio_handle(packet)
+
+
+
+
+
+
+
+
+
+
+
+
+
