@@ -9,12 +9,22 @@ FULL_MESSAGE = ""
 
 def radio_handle(packet):
     print(packet)
-    source_pin = packet[0:1]
-    destination_pin = packet[1:2]
-    communication_id = packet[2:3]
-    packet_id = packet[5:6]
-    flag = packet[7:10]
-    data = packet[10:]
+    source_pin = packet[0:2]
+    print("Source pin : " , source_pin)
+    destination_pin = packet[2:4]
+    print("destination_pin : " , destination_pin)
+
+    communication_id = packet[4:6]
+    print("communication_id : " , communication_id)
+
+    packet_id = packet[6:8]
+    print("packet_id : " , packet_id)
+
+    flag = packet[8:11]
+    print("flag : " , flag)
+
+    data = packet[11:]
+    print("data : " , data)
     global FULL_MESSAGE
     
     if flag == 'SYN':
