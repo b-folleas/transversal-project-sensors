@@ -21,6 +21,6 @@ RST -> Reset : Réinitialisation de la connexion
 
 Il nous reste donc 22 caractères pour les données.
 
-| Field   | SC | ID | FLG | MSG |
-|:--------|---:|---:|----:|----:|
-| Nb bytes| 2  | 2  |  3  |  22 |
+| Field    | Source | Destination | Communication ID | Packet ID | Flag | Data |
+|:---------|-------:|------------:|-----------------:|----------:|-----:|-----:|
+| Nb bytes |      2 |           2 |                2 |         2 |    3 |   18 |
