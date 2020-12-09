@@ -4,18 +4,22 @@ import radio
 radio.on()
 radio.config(channel=1)  # Setting channel for communication
 radio.config(power=7)
+SENSOR_PIN = '98'
 FULL_MESSAGE = ""
 
-def radio_handle(msg):
-    print(msg)
-    sensor_pin = msg[0:1]
-    packet_id = msg[2:3]
-    flag = msg[4:7]
-    data = msg[7:]
+def radio_handle(packet):
+    print(packet)
+    source_pin = packet[0:1]
+    destination_pin = packet[1:2]
+    communication_id = packet[2:3]
+    packet_id = packet[5:6]
+    flag = packet[7:10]
+    data = packet[10:]
     global FULL_MESSAGE
     
     if flag == 'SYN':
-        radio.send('ACK') # packet sending process continue
+        response = SENSOR_PIN + source_pin + '00' + '00' + 'ACK' + '##################' # 99 for broadcast
+        radio.send(response) # packet sending process continue
     elif flag == 'PSH':
         FULL_MESSAGE = FULL_MESSAGE + data
         print(data)
