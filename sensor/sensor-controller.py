@@ -71,7 +71,6 @@ def radio_send(msg): # split the msg into packets of defined length
 print('Hello')
 
 while True:
-    
 
     init_connection()
 
@@ -89,20 +88,10 @@ while True:
     if uart.any(): # check if there is anything to be read
         uart_handle()
      
-    # test radio 'classic'
+    # stop while
     if button_a.is_pressed() and button_b.is_pressed():
-        for i in range(0, len(msg)-1, 22):
-            subMsg = msg[i:i+22]
-            while len(subMsg) < 22 :
-                subMsg+='#' # padding
-
-            # debug
-            #print(subMsg)
-            radio.send(subMsg)
-            # debug
-            print('subMsg fait ', len(subMsg), 'caractères') 
-            
-            
+        print('Execution stopped')
+        break
             
             
             

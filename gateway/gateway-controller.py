@@ -44,7 +44,11 @@ while True:
 
     if button_a.is_pressed():
         print("Gateway test")
-        
+     
+    # stop while
+    if button_a.is_pressed() and button_b.is_pressed():
+        print('Execution stopped')
+        break 
         
 
 
