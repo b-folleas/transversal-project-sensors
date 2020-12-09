@@ -24,11 +24,10 @@ def radio_handle(packet):
         radio.send('RST')
         # arreter communication avec sensor -> n'écrit pas en base le message de la derniere communication du sensor qui a envoyé le reset
     else:
-        print('Error : Unauthorized Flag.')
+        print('Error :', flag ,'- Unauthorized Flag')
 
 while True:
     packet = radio.receive()
-
     if (packet != None):
         radio_handle(packet)
 

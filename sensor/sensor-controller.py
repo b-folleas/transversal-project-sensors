@@ -18,7 +18,7 @@ radio.config(power=7)
 
 def init_connection():
     packet = SENSOR_PIN + '00SYN######################' 
-    print("init radio : " , packet)
+    print("init radio : " , packet) # debug
     try :
         radio.send(packet)
     except ValueError:
@@ -41,10 +41,10 @@ def radio_send(msg): # split the msg into packets of defined length
         while len(subMsg) < 22 :
             subMsg+='#' # padding
             flag = 'FIN'
-            packet = SENSOR_PIN + (str(packet_id) if packet_id > 9 else '0' + str(packet_id)) + flag + subMsg
+        packet = SENSOR_PIN + (str(packet_id) if packet_id > 9 else '0' + str(packet_id)) + flag + subMsg
         if (len(packet) <= PACKET_MAX_LENGTH):    
+            print(packet)
             try:
-                print(packet)
                 radio.send(packet)
             except ValueError:
                 print("Error : There is a problem with sending radio messages.")
@@ -55,7 +55,10 @@ def radio_send(msg): # split the msg into packets of defined length
 while True:
     
     if button_a.is_pressed(): # test sending packet then display in gateway
+        print('A is pressed')
         init_connection()
+
+        sleep(1) # wait one second for message to receive
 
         # we suggest the sensor only listen if it is awaiting an ACK
         packet_received = radio.receive()
@@ -65,7 +68,8 @@ while True:
                 radio_send(msg)
             else :
                 print('Error : Unauthorized connection')
-    sleep(1)
+        else :
+            print('No message so far')
 
     if uart.any(): # check if there is anything to be read
         uart_handle()
