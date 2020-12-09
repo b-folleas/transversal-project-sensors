@@ -18,12 +18,12 @@ radio.on()
 radio.config(channel=1)
 radio.config(power=7)
 
-def init_connection():
+def init_connection(flag):
 
     global SENSOR_PIN
     global BROADCAST_PIN
-
-    packet = SENSOR_PIN + BROADCAST_PIN + '00' + '00' + 'SYN' + '######################' # 99 for broadcast
+    # for the SYN packet, the communication_id is '00', it value will be sent by gateway
+    packet = SENSOR_PIN + BROADCAST_PIN + '00' + '00' + flag + '######################' # 99 for broadcast
     print("init radio : " , packet) # debug
     try:
         radio.send(packet)
@@ -65,7 +65,6 @@ def radio_send(msg): # split the msg into packets of defined length
         packet = SENSOR_PIN + GATEWAY_PIN + '00' + (str(packet_id) if packet_id > 9 else '0' + str(packet_id)) + flag + subMsg
         if (len(packet) <= PACKET_MAX_LENGTH):    
             try:
-                # print(packet) # debug
                 radio.send(packet)
             except ValueError:
                 print("Error : There is a problem with sending radio messages.")
@@ -73,39 +72,25 @@ def radio_send(msg): # split the msg into packets of defined length
             print("Error : Packet segmentation.")
         packet_id += 1
 
-def radio_send_save(msg): # split the msg into packets of defined length
-    packet_id = 0
-    flag = 'PSH'
-    for i in range(0, len(msg)-1, 18):
-        subMsg = msg[i:i+18]
-        while len(subMsg) < 18 :
-            subMsg+='#' # padding
-            flag = 'FIN'
-        packet = SENSOR_PIN + GATEWAY_PIN + '00' + (str(packet_id) if packet_id > 9 else '0' + str(packet_id)) + flag + subMsg
-        if (len(packet) <= PACKET_MAX_LENGTH):    
-            try:
-                print(packet)
-                radio.send(packet)
-            except ValueError:
-                print("Error : There is a problem with sending radio messages.")
-        else:
-            print("Error : Packet segmentation.")
-        packet_id += 1
-
-if __name__ == "__main__" :
+if __name__ == '__main__' :
 
     while (GATEWAY_PIN == None):
         # keep asking for a connection
-        init_connection()
+        if button_a.is_pressed():
+            init_connection('SYN')
+
+        # reset connection
+        if button_b.is_pressed()
+            init_connection('SYN')
 
         # then sensor keep waiting for a gateway
         packet_received = radio.receive()
 
         if (packet_received != None):
             radio_handle(packet_received) # expecting ACK to continue communication
-            if (GATEWAY_PIN != None):
+            if (GATEWAY_PIN != None): # ACK set GATEWAY_PIN
                 print('GATEWAY:',GATEWAY_PIN)
-                radio_send_save(msg)           
+                radio_send(msg)           
             else :
                 print('Error : Connection refused')
         
@@ -118,3 +103,4 @@ if __name__ == "__main__" :
         if button_a.is_pressed() and button_b.is_pressed():
             print('Execution stopped')
             break
+        
