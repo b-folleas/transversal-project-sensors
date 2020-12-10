@@ -13,6 +13,9 @@ radio.on()
 radio.config(channel=1)  # Setting channel for communication
 radio.config(power=7)
 
+def id_2_char(id):
+    return (str(id) if id > 9 else '0' + str(id))
+
 def radio_handle(packet):
 
     global FULL_MESSAGE
@@ -41,32 +44,41 @@ def radio_handle(packet):
 
     data = packet[11:]
     print('data : ' , data)
-    
-    if (destination_pin == GATEWAY_PIN or destination_pin == BROADCAST_PIN):
-
-        if (flag == 'SYN'):
-            response = GATEWAY_PIN + source_pin + (str(COMMUNICATION_ID) if COMMUNICATION_ID > 9 else '0' + str(COMMUNICATION_ID)) + '00' + 'ACK' + '##################'
+    if (destination_pin == (BROADCAST_PIN or GATEWAY_PIN)):
+        if (flag == 'SYN'): # réponds ACK
+            response = GATEWAY_PIN + source_pin + id_2_char(COMMUNICATION_ID) + '00' + 'ACK' + '##################'
             radio.send(response) # ACK sent, packet sending process continue
-            COMMUNICATION_ID = (COMMUNICATION_ID + 1)%100 # each ACK sent creates ident COMMUNICATION_ID   
-        elif flag == 'PSH':
-            FULL_MESSAGE = FULL_MESSAGE + data
-            print(data)
-            # continuer communication avec sensor -> check sensor_pin
-        elif flag == 'FIN':
-            FULL_MESSAGE = FULL_MESSAGE + data
-            print('Message :', FULL_MESSAGE.strip('#')) # delete padding
-            FULL_MESSAGE = ""
-            # arreter communication avec sensor -> pret à accepter un nouveau syn
-        elif flag == 'RST':
+            COMMUNICATION_ID = (COMMUNICATION_ID + 1)%100 # each ACK sent creates indent COMMUNICATION_ID
+         else (flag == 'RST'):
             response = GATEWAY_PIN + source_pin + communication_id + packet_id + 'RST' + '##################'
             radio.send('RST')
             # arreter communication avec sensor -> n'écrit pas en base le message de la derniere communication du sensor qui a envoyé le reset
-        else:
-            print('Error : Unauthorized Flag.')
+    elif (destination_pin == GATEWAY_PIN):
+        if (flag == 'PSH'):
+            # check le communication_id
+            if (id_2_char(COMMUNICATION_ID) == communication_id):
+                FULL_MESSAGE = FULL_MESSAGE + data
+                print(data)
+            else:
+                print('Error : Wrong Communication ID :', communication_id, 'should be :', id_2_char(COMMUNICATION_ID))
+        elif (flag == 'FIN'):
+            if (id_2_char(COMMUNICATION_ID) == communication_id):
+                if (packet_id == str(PACKET_ID + 1)):
+                    # check communication_id & packet_id = packet_id +1
+                    FULL_MESSAGE = FULL_MESSAGE + data
+                    print('Message :', FULL_MESSAGE.strip('#')) # delete padding
+                    FULL_MESSAGE = ""
+                    PACKET_ID = packet_id
+                else:
+                    print('Error : Wrong Packet ID :', packet_id, 'should be :', PACKET_ID + 1)
+            else:
+                print('Error : Wrong Communication ID :', communication_id, 'should be :', id_2_char(COMMUNICATION_ID))
     else:
-        print('Error : Wrong destination')
+        print('Error : Unauthorized Flag.')
 
 if __name__ == '__main__' :
+
+    print('I am gateway')
 
     while True:
         msg = radio.receive()

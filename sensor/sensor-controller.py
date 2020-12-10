@@ -5,7 +5,7 @@ import radio
 from time import *
 
 # testing msg : 22 caractères max on s'assure toujours que le message est inférieur a 176 bits (22 caractères)
-msg = "(1,1,1)(2,2,2)(3,3,3)(4,4,4)(5,5,5)(6,6,6)(7,7,7)(8,8,8)"
+msg = "F/1,1,1/2,2,2/3,3,3&I/4,4,4/6,6,6"
 
 PACKET_MAX_LENGTH = 29
 SENSOR_PIN = '01'
@@ -17,6 +17,9 @@ uart.init(baudrate=115200, bits=8, parity=None, stop=1)
 radio.on()
 radio.config(channel=1)
 radio.config(power=7)
+
+def id_2_char(id):
+    return (str(id) if id > 9 else '0' + str(id))
 
 def init_connection(flag):
 
@@ -32,8 +35,8 @@ def init_connection(flag):
     sleep(1)  # sleep 1s before trying new connection
    
 def uart_handle():
-    msg_bytes = (uart.read())
-    msg_str = str(msg_bytes, 'UTF-8') # encoding 
+    data_bytes = (uart.read())
+    data = str(data_bytes, 'UTF-8') # encoding 
     # so far, do nothing
 
 def uart_send(msg):
@@ -62,7 +65,7 @@ def radio_send(msg): # split the msg into packets of defined length
         while len(subMsg) < 18 :
             subMsg+='#' # padding
             flag = 'FIN'
-        packet = SENSOR_PIN + GATEWAY_PIN + '00' + (str(packet_id) if packet_id > 9 else '0' + str(packet_id)) + flag + subMsg
+        packet = SENSOR_PIN + GATEWAY_PIN + communication_id + id_2_char(packet_id) + flag + subMsg
         if (len(packet) <= PACKET_MAX_LENGTH):    
             try:
                 radio.send(packet)
@@ -74,14 +77,16 @@ def radio_send(msg): # split the msg into packets of defined length
 
 if __name__ == '__main__' :
 
+    print('I am sensor')
+
     while (GATEWAY_PIN == None):
         # keep asking for a connection
         if button_a.is_pressed():
             init_connection('SYN')
 
         # reset connection
-        if button_b.is_pressed()
-            init_connection('SYN')
+        if button_b.is_pressed():
+            init_connection('RST')
 
         # then sensor keep waiting for a gateway
         packet_received = radio.receive()
@@ -98,6 +103,9 @@ if __name__ == '__main__' :
 
         if uart.any(): # check if there is anything to be read
             uart_handle()
+            if (data != None):
+                init_connection('SYN')
+
         
         # stop while
         if button_a.is_pressed() and button_b.is_pressed():
