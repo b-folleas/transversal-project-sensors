@@ -46,12 +46,13 @@ def radio_handle(packet):
     print('data : ' , data)
     if (destination_pin == (BROADCAST_PIN or GATEWAY_PIN)):
         if (flag == 'SYN'): # réponds ACK
+            COMMUNICATION_ID = (COMMUNICATION_ID + 1)%100 # each ACK sent creates indent COMMUNICATION_ID
+            print('Set COMMUNICATION_ID :', COMMUNICATION_ID)
             response = GATEWAY_PIN + source_pin + id_2_char(COMMUNICATION_ID) + '00' + 'ACK' + '##################'
             radio.send(response) # ACK sent, packet sending process continue
-            COMMUNICATION_ID = (COMMUNICATION_ID + 1)%100 # each ACK sent creates indent COMMUNICATION_ID
-         else (flag == 'RST'):
+        elif (flag == 'RST'):
             response = GATEWAY_PIN + source_pin + communication_id + packet_id + 'RST' + '##################'
-            radio.send('RST')
+            radio.send(response)
             # arreter communication avec sensor -> n'écrit pas en base le message de la derniere communication du sensor qui a envoyé le reset
     elif (destination_pin == GATEWAY_PIN):
         if (flag == 'PSH'):
@@ -63,7 +64,7 @@ def radio_handle(packet):
                 print('Error : Wrong Communication ID :', communication_id, 'should be :', id_2_char(COMMUNICATION_ID))
         elif (flag == 'FIN'):
             if (id_2_char(COMMUNICATION_ID) == communication_id):
-                if (packet_id == str(PACKET_ID + 1)):
+                if (packet_id == id_2_char(PACKET_ID + 1)):
                     # check communication_id & packet_id = packet_id +1
                     FULL_MESSAGE = FULL_MESSAGE + data
                     print('Message :', FULL_MESSAGE.strip('#')) # delete padding
