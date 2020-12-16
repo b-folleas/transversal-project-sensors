@@ -21,6 +21,7 @@ Id de la communication en cours. Permet ainsi à la gateway de recevoir plusieur
 Id du paquet de la communication. Cela permet ainsi de reconstruire le message.
 
 **Flag (état de la communication) :** 3 caractères
+
 Label de l'état de la communication indiqué dans le paquet.
 
 SYN -> Synchronisation : Demande de connexion
@@ -50,3 +51,4 @@ I pour les innodations : 1 innondation à la case 4x4 d'une intensité de 4, 1 i
 | Field    | Source | Destination | Communication ID  | Packet ID  | Flag | Data |
 |:---------|-------:|------------:|------------------:|-----------:|-----:|-----:|
 | Nb bytes |      2 |           2 |                 2 |          2 |    3 |   18 |
+
