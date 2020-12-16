@@ -73,10 +73,6 @@ def radio_handle(packet):  # response from gateway
         GATEWAY_PIN = source_pin
         COMMUNICATION_ID = int(communication_id)
         
-        # TODO
-        # gestion du packet après ACK
-        # radio_send(msg)
-
         # Set new address sent from gateway
         print('New address :', int(data)) # debug
         radio.config(address=int(data))
@@ -129,12 +125,11 @@ if __name__ == '__main__':
                 # expecting ACK to continue communication
                 radio_handle(LAST_PACKET_RECEIVED)
 
-                # TODO intégrer cette logique dans radio_handle
-                if (GATEWAY_PIN != None):  # GATEWAY_PIN is set by ACK of gateway
+                # GATEWAY_PIN is set by ACK of gateway
+                if (GATEWAY_PIN != None):
                     radio_send(DATA)
                 else:
                     print('Error : Connection refused')
-                #######
             else:
                 print('Error : No response Timeout')
 
