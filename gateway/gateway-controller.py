@@ -23,6 +23,15 @@ def id_2_char(id):
     return (str(id) if id > 9 else '0' + str(id))
 
 
+def caesar_encrypt(plain, key):  # only applied to data field
+    plain = plain.encode('utf-8')
+    cipher = bytearray(plain)
+    for i, c in enumerate(plain):
+        cipher[i] = (c + key) & 0xff
+    bytes_to_return = bytes(cipher)
+    return bytes_to_return.hex()
+    
+
 def caesar_decrypt(cipher, key):
     plain = bytearray(len(cipher))    # at most, len(plain) <= len(cipher)
     for i, c in enumerate(bytes.fromhex(cipher)):
@@ -57,9 +66,10 @@ def radio_handle(packet):
             address = random.randint(75626970, 75626980)
             print('Set New address :', address)  # debug
 
+            # In ACK, data is encrypted as address is defined on 8 bytes and we have 18 bytes for data
             response = GATEWAY_PIN + source_pin + \
                 id_2_char(COMMUNICATION_ID) + '00' + 'ACK' + \
-                str(address)
+                caesar_encrypt(str(address), KEY)
             radio.send(response)  # ACK sent, packet sending process continue
 
             # Setting address for communication after sending packet (because sensor is still on old adress)

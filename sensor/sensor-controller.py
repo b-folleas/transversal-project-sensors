@@ -66,6 +66,13 @@ def caesar_encrypt(plain, key):  # only applied to data field
     return bytes_to_return.hex()
 
 
+def caesar_decrypt(cipher, key):
+    plain = bytearray(len(cipher))    # at most, len(plain) <= len(cipher)
+    for i, c in enumerate(bytes.fromhex(cipher)):
+        plain[i] = (c - key) & 0xff
+    return plain.decode('utf-8')
+
+
 def radio_handle(packet):  # response from gateway encrypted
 
     global GATEWAY_PIN
@@ -83,10 +90,10 @@ def radio_handle(packet):  # response from gateway encrypted
     if flag == 'ACK':  # can communicate with gateway
         GATEWAY_PIN = source_pin
         COMMUNICATION_ID = int(communication_id)
-
+        new_address = int(caesar_decrypt(data))
         # Set new address sent from gateway
-        print('New address :', int(data))  # debug
-        radio.config(address=int(data))
+        print('New address :', new_address)  # debug
+        radio.config(address=new_address)
 
 
 def radio_send(msg):  # split the msg into packets of defined length
