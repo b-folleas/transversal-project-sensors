@@ -5,17 +5,19 @@ import radio
 from time import *
 
 # testing msg : 22 caractères max on s'assure toujours que le message est inférieur a 176 bits (22 caractères)
-DATA = "F/1,1,1/2,2,2/3,3,3&I/4,4,4/6,6,6"
+DATA = caesar_encrypt("F/1,1,1/2,2,2/3,3,3&I/4,4,4/6,6,6") # La valeur de DATA doit être récupérée via UART du webs erver simulator
 
 PACKET_MAX_LENGTH = 29
 SENSOR_PIN = '01'  # hardcode => similar as a MAC address
-BROADCAST_PIN = '99'  # hardcode => broadcast pin, can be anything as long as shared between gateway and sensor
+# hardcode => broadcast pin, can be anything as long as shared between gateway and sensor
+BROADCAST_PIN = '99'
 GATEWAY_PIN = None
 COMMUNICATION_ID = 0  # Set by gateway
 PACKET_ID = 0
 LAST_PACKET_RECEIVED = None
 STOP_BOOL = False
 DEFAULT_ADDRESS = 75626974  # Parameter that can change
+KEY = 1436  # shared by sensor and gateway
 
 # The address is generated and given by gateway during ACK
 
@@ -55,7 +57,16 @@ def uart_send(msg):
     print(msg)
 
 
-def radio_handle(packet):  # response from gateway
+def caesar_encrypt(plain, key):  # only applied to data field
+    plain = plain.encode('utf-8')
+    cipher = bytearray(plain)
+    for i, c in enumerate(plain):
+        cipher[i] = (c + key) & 0xff
+    bytes_to_return = bytes(cipher)
+    return bytes_to_return.hex()
+
+
+def radio_handle(packet):  # response from gateway encrypted
 
     global GATEWAY_PIN
     global COMMUNICATION_ID
@@ -72,10 +83,11 @@ def radio_handle(packet):  # response from gateway
     if flag == 'ACK':  # can communicate with gateway
         GATEWAY_PIN = source_pin
         COMMUNICATION_ID = int(communication_id)
-        
+
         # Set new address sent from gateway
-        print('New address :', int(data)) # debug
+        print('New address :', int(data))  # debug
         radio.config(address=int(data))
+
 
 def radio_send(msg):  # split the msg into packets of defined length
     PACKET_ID = 0

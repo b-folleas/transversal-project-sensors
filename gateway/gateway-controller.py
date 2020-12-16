@@ -11,6 +11,7 @@ COMMUNICATION_ID = 0  # From 0 to 100, set the link between gateway and sensor
 PACKET_ID = 0  # Last packet got on gateway
 STOP_BOOL = False
 DEFAULT_ADDRESS = 75626974
+KEY = 1436  # shared by sensor and gateway
 
 radio.on()
 radio.config(channel=1)  # Setting channel for communication
@@ -22,6 +23,13 @@ def id_2_char(id):
     return (str(id) if id > 9 else '0' + str(id))
 
 
+def caesar_decrypt(cipher, key):
+    plain = bytearray(len(cipher))    # at most, len(plain) <= len(cipher)
+    for i, c in enumerate(bytes.fromhex(cipher)):
+        plain[i] = (c - key) & 0xff
+    return plain.decode('utf-8')
+
+
 def radio_handle(packet):
 
     global FULL_MESSAGE
@@ -30,8 +38,7 @@ def radio_handle(packet):
     global COMMUNICATION_ID
     global PACKET_ID
 
-    print('Incoming packet :')
-    print(packet)
+    print('Incoming packet :', packet)
 
     source_pin = packet[0:2]
     destination_pin = packet[2:4]
@@ -39,6 +46,7 @@ def radio_handle(packet):
     packet_id = packet[6:8]
     flag = packet[8:11]
     data = packet[11:]
+
     if (destination_pin == (BROADCAST_PIN or GATEWAY_PIN)):
         if (flag == 'SYN'):  # response from gateway is ACK
             # each ACK sent creates COMMUNICATION_ID
@@ -50,7 +58,8 @@ def radio_handle(packet):
             print('Set New address :', address)  # debug
 
             response = GATEWAY_PIN + source_pin + \
-                id_2_char(COMMUNICATION_ID) + '00' + 'ACK' + str(address)
+                id_2_char(COMMUNICATION_ID) + '00' + 'ACK' + \
+                str(address)
             radio.send(response)  # ACK sent, packet sending process continue
 
             # Setting address for communication after sending packet (because sensor is still on old adress)
@@ -73,7 +82,10 @@ def radio_handle(packet):
                     # check communication_id & packet_id = packet_id +1
                     FULL_MESSAGE = FULL_MESSAGE + data
                     # delete padding
-                    print('Message :', FULL_MESSAGE.strip('#'))
+                    print('Message decrypté :', caesar_decrypt(FULL_MESSAGE.strip('#'), KEY))
+                    
+                    # Here send message via UART to web server
+                    
                     FULL_MESSAGE = ""
                     PACKET_ID = packet_id
 
