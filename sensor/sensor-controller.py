@@ -4,8 +4,7 @@ from microbit import *
 import radio
 from time import *
 
-# testing msg : 22 caractères max on s'assure toujours que le message est inférieur a 176 bits (22 caractères)
-DATA = "F/1,1,1/2,2,2/3,3,3&I/4,4,4/6,6,6"
+DATA = ""
 
 PACKET_MAX_LENGTH = 29
 SENSOR_PIN = '01'  # hardcode => similar as a MAC address
@@ -46,9 +45,10 @@ def init_connection(flag):
 
 
 def uart_handle():
+    global DATA
     data_bytes = (uart.read())
-    data = str(data_bytes, 'UTF-8')  # encoding
-    radio_send(data)
+    DATA = str(data_bytes, 'UTF-8')  # encoding
+    radio_send(DATA)
 
 
 def radio_handle(packet):  # response from gateway

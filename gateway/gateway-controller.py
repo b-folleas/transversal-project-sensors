@@ -23,15 +23,12 @@ def id_2_char(id):
 
 
 def radio_handle(packet):
-
+    
     global FULL_MESSAGE
     global BROADCAST_PIN
     global GATEWAY_PIN
     global COMMUNICATION_ID
     global PACKET_ID
-
-    print('Incoming packet :')
-    print(packet)
 
     source_pin = packet[0:2]
     destination_pin = packet[2:4]
@@ -47,7 +44,6 @@ def radio_handle(packet):
 
             # Find right pool for random address
             address = random.randint(75626970, 75626980)
-            print('Set New address :', address)  # debug
 
             response = GATEWAY_PIN + source_pin + \
                 id_2_char(COMMUNICATION_ID) + '00' + 'ACK' + str(address)
@@ -63,52 +59,55 @@ def radio_handle(packet):
             # check le communication_id
             if (id_2_char(COMMUNICATION_ID) == communication_id):
                 FULL_MESSAGE = FULL_MESSAGE + data
-                print(data)
+                PACKET_ID += 1
             else:
                 print('Error : Wrong Communication ID :', communication_id,
-                      'should be :', id_2_char(COMMUNICATION_ID))
+                      'should be :', id_2_char(COMMUNICATION_ID) + '@')
+                     
         elif (flag == 'FIN'):
             if (id_2_char(COMMUNICATION_ID) == communication_id):
-                if (packet_id == id_2_char(PACKET_ID + 1)):
+
+                if (packet_id == id_2_char(PACKET_ID)):
                     # check communication_id & packet_id = packet_id +1
                     FULL_MESSAGE = FULL_MESSAGE + data
                     # delete padding
-                    print(FULL_MESSAGE.strip('#'))
+                    print(FULL_MESSAGE.strip('#') + '@')
                     FULL_MESSAGE = ""
-                    PACKET_ID = packet_id
+                    
+                    PACKET_ID = 0
 
                     # fin de la communication, on repasse sur l'adresse par défaut
-                    print('Back to default address :',
-                          int(DEFAULT_ADDRESS))  # debug
                     radio.config(address=int(DEFAULT_ADDRESS))
                 else:
                     print('Error : Wrong Packet ID :', packet_id,
-                          'should be :', PACKET_ID + 1)
+                          'should be :', PACKET_ID, '@')
                     # keep the previous COMMUNICATION_ID
                     response = GATEWAY_PIN + source_pin + \
                         id_2_char(COMMUNICATION_ID) + '00' + \
                         'RST' + '##################'
                     radio.send(response)  # RST sent
+                    PACKET_ID = 0
                     radio.config(address=DEFAULT_ADDRESS)
             else:
                 print('Error : Wrong Communication ID :', communication_id,
-                      'should be :', id_2_char(COMMUNICATION_ID))
+                      'should be :', id_2_char(COMMUNICATION_ID) + '@')
     else:
         print('Error : Unauthorized Flag.')
 
 
 if __name__ == '__main__':
 
-    print('I am gateway')
+    print('I am gateway@')
 
     while not STOP_BOOL:
         msg = radio.receive()
 
         if (msg != None):
             radio_handle(msg)
+            
 
         if button_a.is_pressed():
-            print("Gateway is alive !")
+            print("Gateway is alive !@")
 
         # stop while
         if button_a.is_pressed() and button_b.is_pressed():
