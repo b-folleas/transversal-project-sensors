@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Les lignes commençant par '#' sont des commentaires.
 
 # Ignorer tous les fichiers visualstudio
 *.vs
+=======
+SQL_updater.py
+>>>>>>> 3cf5b4cebe996f05873babfec59c1f369357e4cc
