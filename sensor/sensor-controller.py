@@ -51,7 +51,6 @@ def uart_handle():
     radio_send(data)
 
 
-
 def radio_handle(packet):  # response from gateway
 
     global GATEWAY_PIN
@@ -137,7 +136,3 @@ if __name__ == '__main__':
         if button_a.is_pressed() and button_b.is_pressed():
             print('Execution stopped')
             STOP_BOOL = True
-<<<<<<< HEAD
-=======
-            
->>>>>>> 3cf5b4c... correction envoie et reception uart
