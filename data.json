@@ -4,14 +4,14 @@
             "sensor_pin":"01",
             "communication": {
                 "id": "01",
-                "last_packet_id":"01"
+                "last_pck_id":"01"
             }
         },
         {
             "sensor_pin":"02",
             "communication": {
                 "id": "00",
-                "last_packet_id": "00"
+                "last_pck_id": "00"
                 }
         }
     ]      
