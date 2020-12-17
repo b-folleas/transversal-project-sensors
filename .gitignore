@@ -2,3 +2,4 @@
 
 # Ignorer tous les fichiers visualstudio
 *.vs
+SQL_updater.py

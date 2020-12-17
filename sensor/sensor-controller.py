@@ -48,11 +48,8 @@ def init_connection(flag):
 def uart_handle():
     data_bytes = (uart.read())
     data = str(data_bytes, 'UTF-8')  # encoding
-    # so far, do nothing
+    radio_send(data)
 
-
-def uart_send(msg):
-    print(msg)
 
 
 def radio_handle(packet):  # response from gateway
@@ -135,10 +132,12 @@ if __name__ == '__main__':
 
         if uart.any():  # check if there is anything to be read
             uart_handle()
-            if (data != ''):
-                init_connection('SYN')
 
         # stop while
         if button_a.is_pressed() and button_b.is_pressed():
             print('Execution stopped')
             STOP_BOOL = True
+<<<<<<< HEAD
+=======
+            
+>>>>>>> 3cf5b4c... correction envoie et reception uart

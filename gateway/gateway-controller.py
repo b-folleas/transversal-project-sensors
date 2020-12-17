@@ -73,7 +73,7 @@ def radio_handle(packet):
                     # check communication_id & packet_id = packet_id +1
                     FULL_MESSAGE = FULL_MESSAGE + data
                     # delete padding
-                    print('Message :', FULL_MESSAGE.strip('#'))
+                    print(FULL_MESSAGE.strip('#'))
                     FULL_MESSAGE = ""
                     PACKET_ID = packet_id
 
