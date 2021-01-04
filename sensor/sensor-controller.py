@@ -3,7 +3,7 @@
 from microbit import *
 import radio
 from time import *
-from rsa import *
+import rsa
 
 # testing msg : 22 char max (< 176 bits (22 char))
 DATA = "coucou"
@@ -96,7 +96,7 @@ def radio_send(msg):  # split the msg into packets of defined length
                 print("Error : Packet segmentation.")
             PCK_ID += 1
         else:
-            print('Reset connection.')
+            print('Error : Reset connection.')
             PCK_ID = 0
             init_connection('RST')
 
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     print('sensor')
 
-    DATA = encrypt(public_key[0],public_key[1],DATA)
+    DATA = rsa.encrypt(public_key[0],public_key[1],DATA)
 
     while not STP_BOL:
         # Press button A to send messages

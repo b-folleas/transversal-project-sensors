@@ -24,7 +24,7 @@ def encrypt(n, c, msg):
         l.append(ascg[d:f])
         d, f = f, f + 4
 
-    # chiffrement des groupes
+    # crypting blocs
     crypt = [str(((int(i))**c) % n) for i in l]
     return crypt
 

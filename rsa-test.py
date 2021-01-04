@@ -21,7 +21,7 @@ def isprime(n):
 
     return True
 
-def coupcoup(k, long):
+def cut(k, long):
     """"cut long blocks in a string k and return a list of blocks"""
 
     d, f = 0, long
@@ -144,7 +144,6 @@ def decrypt(n, d, *crypt):
     d, f = 0, 3
     while f < len(g):
         asci = asci + chr(int(g[d:f]))  # convert to ascii
-        d, f = f, f + 3
     return asci
 
 

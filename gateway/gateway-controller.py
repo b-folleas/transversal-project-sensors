@@ -3,7 +3,7 @@
 from microbit import *
 import radio
 import random
-import rsa import *
+import rsa
 
 GWY_PIN = '98'
 BCT_PIN = '99'
@@ -76,7 +76,7 @@ def radio_handle(packet):
                     # check com_id & pck_id = pck_id +1
                     FULL_MESSAGE = FULL_MESSAGE + data
                     # delete padding
-                    print('Message :', decrypt(private_key[0],private_key[1],FULL_MESSAGE.strip('#')))
+                    print('Message :', rsa.decrypt(private_key[0],private_key[1],FULL_MESSAGE.strip('#')))
                     FULL_MESSAGE = ""
                     PCK_ID = pck_id
 
