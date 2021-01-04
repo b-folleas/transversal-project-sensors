@@ -7,6 +7,7 @@ from time import *
 DATA = ""
 
 PACKET_MAX_LENGTH = 29
+MSG_MAX_LENGTH = 17
 SENSOR_PIN = '01'  # hardcode => similar as a MAC address
 BROADCAST_PIN = '99'  # hardcode => broadcast pin, can be anything as long as shared between gateway and sensor
 GATEWAY_PIN = None
@@ -30,11 +31,27 @@ def id_2_char(id):
     return (str(id) if id > 9 else '0' + str(id))
 
 
+def getParity(n): # return 0 if even, 1 if odd 
+	parity = 0
+	while n: 
+		parity = ~parity 
+		n = n & (n - 1) 
+	return abs(parity) 
+
+
 def init_connection(flag):
     global SENSOR_PIN
     global BROADCAST_PIN
+
+    subMsg = ''
+    while len(subMsg) < MSG_MAX_LENGTH:
+        subMsg += '#'  # padding
+    # Converting String to binary 
+    subMsg_bytes = bytes(subMsg, "utf-8")
+    parity = getParity(int.from_bytes(subMsg_bytes, 2))
+
     packet = SENSOR_PIN + BROADCAST_PIN + id_2_char(COMMUNICATION_ID) + id_2_char(
-        PACKET_ID) + flag + '######################'  # 99 for broadcast
+        PACKET_ID) + flag + str(parity) + subMsg
     print("Init connection packet : ", packet)  # debug
     print("Current address: ", DEFAULT_ADDRESS)  # debug
     try:
@@ -63,29 +80,36 @@ def radio_handle(packet):  # response from gateway
     communication_id = packet[4:6]
     packet_id = packet[6:8]
     flag = packet[8:11]
-    data = packet[11:]
+    parity = packet[11:12]
+    data = packet[12:]
+    data_bytes = bytes(data, "utf-8")
+    if (int(parity) == getParity(int.from_bytes(data_bytes, 2))):
+        if flag == 'ACK':  # can communicate with gateway
+            GATEWAY_PIN = source_pin
+            COMMUNICATION_ID = int(communication_id)
+            
+            # Set new address sent from gateway
+            print('New address :', int(data)) # debug
+            radio.config(address=int(data))
+    else:
+        print('Error : Parity Bit Error @')
 
-    if flag == 'ACK':  # can communicate with gateway
-        GATEWAY_PIN = source_pin
-        COMMUNICATION_ID = int(communication_id)
-        
-        # Set new address sent from gateway
-        print('New address :', int(data)) # debug
-        radio.config(address=int(data))
 
 def radio_send(msg):  # split the msg into packets of defined length
     PACKET_ID = 0
     flag = 'PSH'
-    for i in range(0, len(msg)-1, 18):
-        subMsg = msg[i:i+18]
-        while len(subMsg) < 18:
+    for i in range(0, len(msg)-1, MSG_MAX_LENGTH):
+        subMsg = msg[i:i+MSG_MAX_LENGTH]
+        while len(subMsg) < MSG_MAX_LENGTH:
             subMsg += '#'  # padding
             flag = 'FIN'
+        subMsg_bytes = bytes(subMsg, "utf-8")
+        parity = getParity(int.from_bytes(subMsg_bytes, 2))
         # check if they were no RST meanwhile
         if (LAST_PACKET_RECEIVED[8:11] != 'RST'):
             packet = SENSOR_PIN + GATEWAY_PIN + \
                 id_2_char(COMMUNICATION_ID) + \
-                id_2_char(PACKET_ID) + flag + subMsg
+                id_2_char(PACKET_ID) + flag + str(parity) + subMsg
             if (len(packet) <= PACKET_MAX_LENGTH):
                 try:
                     radio.send(packet)

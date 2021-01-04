@@ -30,6 +30,14 @@ FIN -> Final : fin de la communication
 PSH -> Push : Envoie de données
 RST -> Reset : Réinitialisation de la connexion
 
+**Parity Bit :** 1 caractères
+
+Nous utilisons un bit de parité afin de vérifier la validité de nos données. En effet, cet algorithme de checksum est le plus simple à mettre en place et est suffisant pour notre envoi de données sur les micro:bit.
+
+Pour le calculer, on détermine le XOR de notre block data et ainsi, si l'un des bit est erroné, la gateway enverra alors un paquet *Reset*.
+
+**Data :** 17 caractères
+
 Il nous reste donc 18 caractères pour les données (data).
 
 Le protocole d'envoi des données est défini comme tel :
@@ -48,7 +56,6 @@ I pour les innodations : 1 innondation à la case 4x4 d'une intensité de 4, 1 i
 
 **Récapitulatif :**
 
-| Field    | Source | Destination | Communication ID  | Packet ID  | Flag | Data |
-|:---------|-------:|------------:|------------------:|-----------:|-----:|-----:|
-| Nb bytes |      2 |           2 |                 2 |          2 |    3 |   18 |
-
+| Field    | Source | Destination | Communication ID  | Packet ID  | Flag | Parity Bit | Data | Total |
+|:---------|-------:|------------:|------------------:|-----------:|-----:|-----------:|-----:|------;|
+| Nb bytes |      2 |           2 |                 2 |          2 |    3 |          1 |   17 |    29 |

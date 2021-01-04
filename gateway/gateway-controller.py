@@ -22,6 +22,14 @@ def id_2_char(id):
     return (str(id) if id > 9 else '0' + str(id))
 
 
+def getParity(n): # return 0 if even, 1 if odd 
+	parity = 0
+	while n: 
+		parity = ~parity 
+		n = n & (n - 1) 
+	return abs(parity)
+
+
 def radio_handle(packet):
     
     global FULL_MESSAGE
@@ -35,62 +43,110 @@ def radio_handle(packet):
     communication_id = packet[4:6]
     packet_id = packet[6:8]
     flag = packet[8:11]
-    data = packet[11:]
-    if (destination_pin == (BROADCAST_PIN or GATEWAY_PIN)):
-        if (flag == 'SYN'):  # response from gateway is ACK
+    parity = packet[11:12]
+    data = packet[12:]
+    if (destination_pin == (BROADCAST_PIN)):
+        # checking parity bit
+        data_bytes = bytes(data, "utf-8")
+        if (int(parity) == getParity(int.from_bytes(data_bytes, 2))):
+            if (flag == 'SYN'):  # response from gateway is ACK
             # each ACK sent creates COMMUNICATION_ID
-            COMMUNICATION_ID = (COMMUNICATION_ID + 1) % 100
-            # New address for unicast is sent in DATA of ACK
+                COMMUNICATION_ID = (COMMUNICATION_ID + 1) % 100
+                # New address for unicast is sent in DATA of ACK
 
-            # Find right pool for random address
-            address = random.randint(75626970, 75626980)
+                # Find right pool for random address
+                address = random.randint(75626970, 75626980)
+
+                response = GATEWAY_PIN + source_pin + \
+                    id_2_char(COMMUNICATION_ID) + '00' + 'ACK' + str(parity) + str(address)
+                radio.send(response)  # ACK sent, packet sending process continue
+
+                # Setting address for communication after sending packet (because sensor is still on old adress)
+                try:
+                    radio.config(address=address)
+                except ValueError:
+                    print('Error : Wrong address setting')     
+        else:
+            print('Error : Parity Bit Error @')
+            # keep the previous COMMUNICATION_ID
+            subMsg = ''
+            while len(subMsg) < MSG_MAX_LENGTH:
+                subMsg += '#'  # padding
+            subMsg_bytes = bytes(subMsg, "utf-8")
+            parity = getParity(int.from_bytes(subMsg_bytes, 2))
 
             response = GATEWAY_PIN + source_pin + \
-                id_2_char(COMMUNICATION_ID) + '00' + 'ACK' + str(address)
-            radio.send(response)  # ACK sent, packet sending process continue
+                id_2_char(COMMUNICATION_ID) + '00' + \
+                'RST' + str(parity) + subMsg
+            radio.send(response)  # RST sent
+            PACKET_ID = 0
+            radio.config(address=DEFAULT_ADDRESS)
+            return
 
-            # Setting address for communication after sending packet (because sensor is still on old adress)
-            try:
-                radio.config(address=address)
-            except ValueError:
-                print('Error : Wrong address setting')
     elif (destination_pin == GATEWAY_PIN):
-        if (flag == 'PSH'):
-            # check le communication_id
-            if (id_2_char(COMMUNICATION_ID) == communication_id):
-                FULL_MESSAGE = FULL_MESSAGE + data
-                PACKET_ID += 1
-            else:
-                print('Error : Wrong Communication ID :', communication_id,
-                      'should be :', id_2_char(COMMUNICATION_ID) + '@')
-                     
-        elif (flag == 'FIN'):
-            if (id_2_char(COMMUNICATION_ID) == communication_id):
+        # checking parity bit
+            data_bytes = bytes(data, "utf-8")
+            if (int(parity) == getParity(int.from_bytes(data_bytes, 2))):
 
-                if (packet_id == id_2_char(PACKET_ID)):
-                    # check communication_id & packet_id = packet_id +1
-                    FULL_MESSAGE = FULL_MESSAGE + data
-                    # delete padding
-                    print(FULL_MESSAGE.strip('#') + '@')
-                    FULL_MESSAGE = ""
-                    
-                    PACKET_ID = 0
+                if (flag == 'PSH'):
+                    # check le communication_id
+                    if (id_2_char(COMMUNICATION_ID) == communication_id):
+                        FULL_MESSAGE = FULL_MESSAGE + data
+                        PACKET_ID += 1
+                    else:
+                        print('Error : Wrong Communication ID :', communication_id,
+                            'should be :', id_2_char(COMMUNICATION_ID) + '@')
+                            
+                elif (flag == 'FIN'):
+                    if (id_2_char(COMMUNICATION_ID) == communication_id):
 
-                    # fin de la communication, on repasse sur l'adresse par défaut
-                    radio.config(address=int(DEFAULT_ADDRESS))
-                else:
-                    print('Error : Wrong Packet ID :', packet_id,
-                          'should be :', PACKET_ID, '@')
-                    # keep the previous COMMUNICATION_ID
-                    response = GATEWAY_PIN + source_pin + \
-                        id_2_char(COMMUNICATION_ID) + '00' + \
-                        'RST' + '##################'
-                    radio.send(response)  # RST sent
-                    PACKET_ID = 0
-                    radio.config(address=DEFAULT_ADDRESS)
+                        if (packet_id == id_2_char(PACKET_ID)):
+                            # check communication_id & packet_id = packet_id +1
+                            FULL_MESSAGE = FULL_MESSAGE + data
+                            # delete padding
+                            print(FULL_MESSAGE.strip('#') + '@')
+                            FULL_MESSAGE = ""
+                            
+                            PACKET_ID = 0
+
+                            # fin de la communication, on repasse sur l'adresse par défaut
+                            radio.config(address=int(DEFAULT_ADDRESS))
+                        else:
+                            print('Error : Wrong Packet ID :', packet_id,
+                                'should be :', PACKET_ID, '@')
+                            # keep the previous COMMUNICATION_ID
+                            subMsg = ''
+                            while len(subMsg) < MSG_MAX_LENGTH:
+                                subMsg += '#'  # padding
+                            subMsg_bytes = bytes(subMsg, "utf-8")
+                            parity = getParity(int(subMsg_bytes))
+
+                            response = GATEWAY_PIN + source_pin + \
+                                id_2_char(COMMUNICATION_ID) + '00' + \
+                                'RST' + str(parity) + subMsg
+                            radio.send(response)  # RST sent
+                            PACKET_ID = 0
+                            radio.config(address=DEFAULT_ADDRESS)
+                    else:
+                        print('Error : Wrong Communication ID :', communication_id,
+                            'should be :', id_2_char(COMMUNICATION_ID) + '@')
             else:
-                print('Error : Wrong Communication ID :', communication_id,
-                      'should be :', id_2_char(COMMUNICATION_ID) + '@')
+                print('Error : Parity Bit Error @')
+                # keep the previous COMMUNICATION_ID
+                subMsg = ''
+                while len(subMsg) < MSG_MAX_LENGTH:
+                    subMsg += '#'  # padding
+                subMsg_bytes = bytes(subMsg, "utf-8")
+                parity = getParity(int.from_bytes(subMsg_bytes, 2))
+
+                response = GATEWAY_PIN + source_pin + \
+                    id_2_char(COMMUNICATION_ID) + '00' + \
+                    'RST' + str(parity) + subMsg
+                radio.send(response)  # RST sent
+                PACKET_ID = 0
+                radio.config(address=DEFAULT_ADDRESS)
+                return
+
     else:
         print('Error : Unauthorized Flag.')
 
