@@ -30,6 +30,14 @@ FIN -> Final : fin de la communication
 PSH -> Push : Envoie de données
 RST -> Reset : Réinitialisation de la connexion
 
+**Parity Bit :** 1 caractères
+
+Nous utilisons un bit de parité afin de vérifier la validité de nos données. En effet, cet algorithme de checksum est le plus simple à mettre en place et est suffisant pour notre envoi de données sur les micro:bit.
+
+Pour le calculer, on détermine le XOR de notre block data et ainsi, si l'un des bit est erroné, la gateway enverra alors un paquet *Reset*.
+
+**Data :** 17 caractères
+
 Il nous reste donc 18 caractères pour les données (data).
 
 Le protocole d'envoi des données est défini comme tel :
@@ -44,11 +52,27 @@ Ainsi ici nous avons les données de 2 listes d'incidents :
 F pour les feux : 1 feu à la case 1x1 d'une intensité de 1.
 I pour les innodations : 1 innondation à la case 4x4 d'une intensité de 4, 1 innondation à la case 6x6 d'une intensité 6
 
-> Exemple de message : `01980101PSHF/1,1,1&I/4,4,4/6,6,6`
+> Exemple de message : `01980101PSH0F/1,1,1&I/4,4,4/6,6,6`
 
 **Récapitulatif :**
 
-| Field    | Source | Destination | Communication ID  | Packet ID  | Flag | Data |
-|:---------|-------:|------------:|------------------:|-----------:|-----:|-----:|
-| Nb bytes |      2 |           2 |                 2 |          2 |    3 |   18 |
+| Field    | Source | Destination | Communication ID  | Packet ID  | Flag | Parity Bit | Data | Total |
+|:---------|-------:|------------:|------------------:|-----------:|-----:|-----------:|-----:|------;|
+| Nb bytes |      2 |           2 |                 2 |          2 |    3 |          1 |   17 |    29 |
+| Example  |     01 |          98 |                01 |         01 |  PSH |          0 |      |       |
 
+## Sécurité
+
+### Encryption
+
+Les données sont encryptées avant d'être envoyé par radio avec un chiffrement césar. La gateway et le sensor partage la même clé privée (chiffrement symétrique) qui est hardcodé dans les deux fichiers. Il serait mieux de procéder par un échange via clé privée - clé publique pour l'envoi et le partage de la clé privé utilisé pour le chiffrement de César.
+
+Ainsi, les données initialement lues sous forme de string sont encodés en bytes puis envoyées sous forme de bytes en représentation héxadécimale par le sensor. Elles sont alors récupérées par la gateway qui va décoder le message avec la même clé que pour l'encodage.
+
+### Canal de communication
+
+Les cartes micro:bit ne peuvent communiquer par messages radio que s'ils elles ont la même configuration d'adresse. Ainsi, lorsque la gateway reçoit un paquet de demande de synchronisation de la part du sensor (flag SYN) elle envoie en réponse (flag ACK) dans la partie donnée de son paquet l'adresse encryptée de communication sur laquelle la gateway et le sensor doivent se configurer pour envoyer des paquets sur un canal sécurisée.
+
+Ainsi, si l'un utilisateur malveillant cherchait à vouloir récupérer les données envoyées par le sensor il ne pourrait pas car s'il n'a pas la clé du chiffrement césar il ne sait pas sur quelle adresse vont être envoyés les paquets.
+
+> Les adresses envoyées par la gateay au sensor sont générés pseudo-aléatoirement à partir d'une plage d'adresses disponibles. 

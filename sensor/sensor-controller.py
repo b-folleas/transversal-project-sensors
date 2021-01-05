@@ -4,9 +4,9 @@ from microbit import *
 import radio
 from time import *
 
-DATA = ""
 
 PACKET_MAX_LENGTH = 29
+MSG_MAX_LENGTH = 17
 SENSOR_PIN = '01'  # hardcode => similar as a MAC address
 BROADCAST_PIN = '99'  # hardcode => broadcast pin, can be anything as long as shared between gateway and sensor
 GATEWAY_PIN = None
@@ -15,6 +15,7 @@ PACKET_ID = 0
 LAST_PACKET_RECEIVED = None
 STOP_BOOL = False
 DEFAULT_ADDRESS = 75626974  # Parameter that can change
+KEY = 1436  # shared by sensor and gateway
 
 # The address is generated and given by gateway during ACK
 
@@ -30,24 +31,56 @@ def id_2_char(id):
     return (str(id) if id > 9 else '0' + str(id))
 
 
+def getParity(n): # return 0 if even, 1 if odd 
+	parity = 0
+	while n: 
+		parity = ~parity 
+		n = n & (n - 1) 
+	return abs(parity) 
+
+
+def caesar_encrypt(plain, key):  # only applied to data field
+    # plain = plain.encode('utf-8')
+    cipher = bytearray(plain)
+    for i, c in enumerate(plain):
+        cipher[i] = (ord(c) + key) & 0xff
+    bytes_to_return = bytes(cipher)
+    return bytes_to_return
+    
+
+def caesar_decrypt(cipher, key):
+    plain = bytearray(len(cipher))    # at most, len(plain) <= len(cipher)
+    for i, c in enumerate(bytes(cipher)):
+        plain[i] = (c - key) & 0xff
+    return str(bytes(plain), 'utf-8')
+
+
 def init_connection(flag):
     global SENSOR_PIN
     global BROADCAST_PIN
+
+    subMsg = ''
+    # while len(subMsg) < MSG_MAX_LENGTH:
+    #    subMsg += '#'  # padding
+    # Converting String to binary 
+    subMsg_bytes = bytes(subMsg, 'utf-8')
+    parity = getParity(int.from_bytes(subMsg_bytes, 2))
+
     packet = SENSOR_PIN + BROADCAST_PIN + id_2_char(COMMUNICATION_ID) + id_2_char(
-        PACKET_ID) + flag + '######################'  # 99 for broadcast
-    print("Init connection packet : ", packet)  # debug
-    print("Current address: ", DEFAULT_ADDRESS)  # debug
+        PACKET_ID) + flag + str(parity) + subMsg
+    print('Init connection packet : ', packet)  # debug
+    print('Current address: ', DEFAULT_ADDRESS)  # debug
     try:
         radio.send(packet)
     except ValueError:
-        print("Error : Connection failure.")
+        print('Error : Connection failure.')
     sleep(1)  # sleep 1s before trying new connection
 
 
 def uart_handle():
     global DATA
     data_bytes = (uart.read())
-    DATA = str(data_bytes, 'UTF-8')  # encoding
+    DATA = caesar_encrypt(str(data_bytes, 'utf-8'), KEY)  # encoding & encrypting
     radio_send(DATA)
 
 
@@ -63,29 +96,47 @@ def radio_handle(packet):  # response from gateway
     communication_id = packet[4:6]
     packet_id = packet[6:8]
     flag = packet[8:11]
-    data = packet[11:]
+    parity = packet[11:12]
+    data = packet[12:]
+    data_bytes = bytes(data, 'utf-8')
+    # debug 
+    print('data =',data)
+    print('data_bytes =', data_bytes)
 
-    if flag == 'ACK':  # can communicate with gateway
-        GATEWAY_PIN = source_pin
-        COMMUNICATION_ID = int(communication_id)
-        
-        # Set new address sent from gateway
-        print('New address :', int(data)) # debug
-        radio.config(address=int(data))
+    if (int(parity) == getParity(int.from_bytes(data_bytes, 2))):
+        if flag == 'ACK':  # can communicate with gateway
+            GATEWAY_PIN = source_pin
+            COMMUNICATION_ID = int(communication_id)
+            
+            # Set new address sent from gateway
+            # debug DELETE print('New address :', int(data)) # debug
+            print('caesar decrypt data bytes (new address):', bytes(caesar_decrypt(data_bytes, KEY), 'utf-8'))
+            radio.config(address=int(bytes(caesar_decrypt(data_bytes, KEY), 'utf-8')))
+    else:
+        print('Error : Parity Bit Error @')
+
 
 def radio_send(msg):  # split the msg into packets of defined length
     PACKET_ID = 0
     flag = 'PSH'
-    for i in range(0, len(msg)-1, 18):
-        subMsg = msg[i:i+18]
-        while len(subMsg) < 18:
-            subMsg += '#'  # padding
+    for i in range(0, len(msg)-1, MSG_MAX_LENGTH):
+        #msg F1,1,....
+        
+        subMsg = msg[i:i+MSG_MAX_LENGTH]
+        if len(subMsg) < MSG_MAX_LENGTH:
+            # subMsg += '#'  # padding
             flag = 'FIN'
+        # debug
+        print('subMsg = ', subMsg)
+
+        parity = getParity(int.from_bytes(subMsg, 2))
+        print('parity = ', parity)
+
         # check if they were no RST meanwhile
         if (LAST_PACKET_RECEIVED[8:11] != 'RST'):
             packet = SENSOR_PIN + GATEWAY_PIN + \
                 id_2_char(COMMUNICATION_ID) + \
-                id_2_char(PACKET_ID) + flag + subMsg
+                id_2_char(PACKET_ID) + flag + str(parity) + str(subMsg, 'utf-8')
             if (len(packet) <= PACKET_MAX_LENGTH):
                 try:
                     radio.send(packet)
@@ -95,15 +146,16 @@ def radio_send(msg):  # split the msg into packets of defined length
                               int(DEFAULT_ADDRESS))  # debug
                         radio.config(address=int(DEFAULT_ADDRESS))
                 except ValueError:
-                    print("Error : There is a problem with sending radio messages.")
+                    print('Error : There is a problem with sending radio messages.')
             else:
-                print("Error : Packet segmentation.")
+                print('Error : Packet segmentation.')
             PACKET_ID += 1
         else:
             print('Reset : Reset connection and sending message again.')
             PACKET_ID = 0
             init_connection('RST')
 
+DATA = caesar_encrypt('F/1,1,1&I/4,4,4/6,6,6', KEY)
 
 if __name__ == '__main__':
 
@@ -131,6 +183,9 @@ if __name__ == '__main__':
 
         if uart.any():  # check if there is anything to be read
             uart_handle()
+
+        if button_b.is_pressed():
+            print('Sensor is alive !@')
 
         # stop while
         if button_a.is_pressed() and button_b.is_pressed():
