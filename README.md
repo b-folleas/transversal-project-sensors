@@ -57,9 +57,9 @@ I pour les innodations : 1 innondation à la case 4x4 d'une intensité de 4, 1 i
 **Récapitulatif :**
 
 | Field    | Source | Destination | Communication ID  | Packet ID  | Flag | Parity Bit | Data | Total |
-|:---------|-------:|------------:|------------------:|-----------:|-----:|-----------:|-----:|------;|
+|:---------|-------:|------------:|------------------:|-----------:|-----:|-----------:|-----:|------:|
 | Nb bytes |      2 |           2 |                 2 |          2 |    3 |          1 |   17 |    29 |
-| Example  |     01 |          98 |                01 |         01 |  PSH |          0 |      |       |
+| Example  |     01 |          98 |                01 |         01 |  PSH |          0 |  ... |   ... |
 
 ## Sécurité
 
