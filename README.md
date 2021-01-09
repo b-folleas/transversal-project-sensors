@@ -76,3 +76,7 @@ Les cartes micro:bit ne peuvent communiquer par messages radio que s'ils elles o
 Ainsi, si l'un utilisateur malveillant cherchait à vouloir récupérer les données envoyées par le sensor il ne pourrait pas car s'il n'a pas la clé du chiffrement césar il ne sait pas sur quelle adresse vont être envoyés les paquets.
 
 > Les adresses envoyées par la gateay au sensor sont générés pseudo-aléatoirement à partir d'une plage d'adresses disponibles. 
+
+### Possibilités d'amélioration
+
+Il aurait été plus intéressant d'utiliser un système de chiffrement plus sécurisé que le chiffrement César pour l'envoi des données. Cependat, en essayant de mettre en place un chiffrement AES-128 ou un chiffrement RSA nous avons vite fait face à des problèmes d'allocation mémoire des micro:bit et nous avons préféré se concentrer sur le développement des autres aspects du projet.
