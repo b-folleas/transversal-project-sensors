@@ -75,9 +75,9 @@ def radio_handle(packet):
                 # Find right pool for random address
                 address = random.randint(75626970, 75626980)
                 # debug
-                print('Adress to configure :', str(address))
-                print('Caesar encrypt :', caesar_encrypt(str(address), KEY))
-                print('Caesar encrypt hex :',str(bytes(caesar_encrypt(str(address), KEY)), 'utf-8'))
+                print(';Adress to configure :', str(address), ';')
+                print(';Caesar encrypt :', caesar_encrypt(str(address), KEY), ';')
+                print(';Caesar encrypt hex :',str(bytes(caesar_encrypt(str(address), KEY)), 'utf-8'), ';')
 
                 subMsg_bytes = bytes(caesar_encrypt(str(address), KEY))
                 subMsg = str(subMsg_bytes, 'utf-8') # msg is address encrypted and encoded in hex to be < MSG_MAX_LENGTH
@@ -90,9 +90,9 @@ def radio_handle(packet):
                 try:
                     radio.config(address=address)
                 except ValueError:
-                    print('Error : Wrong address setting')     
+                    print(';Error : Wrong address setting;')     
         else:
-            print('Error : Parity Bit Error @')
+            print(';Error : Parity Bit Error ;')
             # keep the previous COMMUNICATION_ID
             subMsg = ''
             while len(subMsg) < MSG_MAX_LENGTH:
@@ -114,10 +114,10 @@ def radio_handle(packet):
             msg = caesar_decrypt(bytes(data, 'utf-8'), KEY)
 
             # debug
-            print('msg received from sensor = ', msg)
-            print('data =', data)
-            print('data bytes =', bytes(data, 'utf-8'))
-            print('data bytes decrypted =', caesar_decrypt(bytes(data, 'utf-8'), KEY))
+            print(';msg received from sensor = ', msg, ';')
+            print(';data =', data, ';')
+            print(';data bytes =', bytes(data, 'utf-8'), ';')
+            print(';data bytes decrypted =', caesar_decrypt(bytes(data, 'utf-8'), KEY), ';')
             # decrypt msg
 
 
@@ -130,8 +130,8 @@ def radio_handle(packet):
                         FULL_MESSAGE = FULL_MESSAGE + msg
                         PACKET_ID += 1
                     else:
-                        print('Error : Wrong Communication ID :', communication_id,
-                            'should be :', id_2_char(COMMUNICATION_ID) + '@')
+                        print(';Error : Wrong Communication ID :', communication_id,
+                            'should be :', id_2_char(COMMUNICATION_ID) + ';')
                             
                 elif (flag == 'FIN'):
                     if (id_2_char(COMMUNICATION_ID) == communication_id):
@@ -148,8 +148,8 @@ def radio_handle(packet):
                             # fin de la communication, on repasse sur l'adresse par défaut
                             radio.config(address=int(DEFAULT_ADDRESS))
                         else:
-                            print('Error : Wrong Packet ID :', packet_id,
-                                'should be :', PACKET_ID, '@')
+                            print(';Error : Wrong Packet ID :', packet_id,
+                                'should be :', PACKET_ID, ';')
                             # keep the previous COMMUNICATION_ID
                             subMsg = ''
                             while len(subMsg) < MSG_MAX_LENGTH:
@@ -164,10 +164,10 @@ def radio_handle(packet):
                             PACKET_ID = 0
                             radio.config(address=DEFAULT_ADDRESS)
                     else:
-                        print('Error : Wrong Communication ID :', communication_id,
-                            'should be :', id_2_char(COMMUNICATION_ID) + '@')
+                        print(';Error : Wrong Communication ID :', communication_id,
+                            'should be :', id_2_char(COMMUNICATION_ID) + ';')
             else:
-                print('Error : Parity Bit Error @')
+                print(';Error : Parity Bit Error ;')
                 # keep the previous COMMUNICATION_ID
                 subMsg = ''
                 while len(subMsg) < MSG_MAX_LENGTH:
@@ -184,12 +184,12 @@ def radio_handle(packet):
                 return
 
     else:
-        print('Error : Unauthorized Flag.')
+        print(';Error : Unauthorized Flag.;')
 
 
 if __name__ == '__main__':
 
-    print('I am gateway@')
+    print(';I am gateway;')
 
     while not STOP_BOOL:
         msg = radio.receive()
@@ -199,9 +199,9 @@ if __name__ == '__main__':
             
 
         if button_a.is_pressed():
-            print('Gateway is alive !@')
+            print(';Gateway is alive !;')
 
         # stop while
         if button_a.is_pressed() and button_b.is_pressed():
-            print('Execution stopped')
+            print(';Execution stopped;')
             STOP_BOOL = True

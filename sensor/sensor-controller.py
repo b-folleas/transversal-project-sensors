@@ -68,12 +68,12 @@ def init_connection(flag):
 
     packet = SENSOR_PIN + BROADCAST_PIN + id_2_char(COMMUNICATION_ID) + id_2_char(
         PACKET_ID) + flag + str(parity) + subMsg
-    print('Init connection packet : ', packet)  # debug
-    print('Current address: ', DEFAULT_ADDRESS)  # debug
+    print(';Init connection packet : ', packet, ';')  # debug
+    print(';Current address: ', DEFAULT_ADDRESS, ';')  # debug
     try:
         radio.send(packet)
     except ValueError:
-        print('Error : Connection failure.')
+        print(';Error : Connection failure.;')
     sleep(1)  # sleep 1s before trying new connection
 
 
@@ -90,7 +90,7 @@ def radio_handle(packet):  # response from gateway
     global COMMUNICATION_ID
 
     # debug to check the packet from gateway
-    print('Received message from Gateway :', packet)
+    print(';Received message from Gateway :', packet, ';')
     source_pin = packet[0:2]
     destination_pin = packet[2:4]
     communication_id = packet[4:6]
@@ -100,8 +100,8 @@ def radio_handle(packet):  # response from gateway
     data = packet[12:]
     data_bytes = bytes(data, 'utf-8')
     # debug 
-    print('data =',data)
-    print('data_bytes =', data_bytes)
+    print(';data =',data, ';')
+    print(';data_bytes =', data_bytes, ';')
 
     if (int(parity) == getParity(int.from_bytes(data_bytes, 2))):
         if flag == 'ACK':  # can communicate with gateway
@@ -110,10 +110,10 @@ def radio_handle(packet):  # response from gateway
             
             # Set new address sent from gateway
             # debug DELETE print('New address :', int(data)) # debug
-            print('caesar decrypt data bytes (new address):', bytes(caesar_decrypt(data_bytes, KEY), 'utf-8'))
+            print(';caesar decrypt data bytes (new address):', bytes(caesar_decrypt(data_bytes, KEY), 'utf-8'), ';')
             radio.config(address=int(bytes(caesar_decrypt(data_bytes, KEY), 'utf-8')))
     else:
-        print('Error : Parity Bit Error @')
+        print(';Error : Parity Bit Error ;')
 
 
 def radio_send(msg):  # split the msg into packets of defined length
@@ -127,10 +127,10 @@ def radio_send(msg):  # split the msg into packets of defined length
             # subMsg += '#'  # padding
             flag = 'FIN'
         # debug
-        print('subMsg = ', subMsg)
+        print(';subMsg = ', subMsg, ';')
 
         parity = getParity(int.from_bytes(subMsg, 2))
-        print('parity = ', parity)
+        print(';parity = ', parity, ';')
 
         # check if they were no RST meanwhile
         if (LAST_PACKET_RECEIVED[8:11] != 'RST'):
@@ -142,16 +142,16 @@ def radio_send(msg):  # split the msg into packets of defined length
                     radio.send(packet)
                     if (flag == 'FIN'):
                         # Back to default address for new communications
-                        print('Back to default address (FIN) :',
-                              int(DEFAULT_ADDRESS))  # debug
+                        print(';Back to default address (FIN) :',
+                              int(DEFAULT_ADDRESS), ';')  # debug
                         radio.config(address=int(DEFAULT_ADDRESS))
                 except ValueError:
-                    print('Error : There is a problem with sending radio messages.')
+                    print(';Error : There is a problem with sending radio messages.;')
             else:
-                print('Error : Packet segmentation.')
+                print(';Error : Packet segmentation.;')
             PACKET_ID += 1
         else:
-            print('Reset : Reset connection and sending message again.')
+            print(';Reset : Reset connection and sending message again.;')
             PACKET_ID = 0
             init_connection('RST')
 
@@ -159,7 +159,7 @@ DATA = caesar_encrypt('F/1,1,1&I/4,4,4/6,6,6', KEY)
 
 if __name__ == '__main__':
 
-    print('I am sensor')
+    print(';I am sensor;')
 
     while not STOP_BOOL:
         # Press button A to send messages
@@ -177,17 +177,17 @@ if __name__ == '__main__':
                 if (GATEWAY_PIN != None):
                     radio_send(DATA)
                 else:
-                    print('Error : Connection refused')
+                    print(';Error : Connection refused;')
             else:
-                print('Error : No response Timeout')
+                print(';Error : No response Timeout;')
 
         if uart.any():  # check if there is anything to be read
             uart_handle()
 
         if button_b.is_pressed():
-            print('Sensor is alive !@')
+            print(';Sensor is alive !;')
 
         # stop while
         if button_a.is_pressed() and button_b.is_pressed():
-            print('Execution stopped')
+            print(';Execution stopped;')
             STOP_BOOL = True
