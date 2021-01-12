@@ -17,8 +17,7 @@ LAST_PACKET_RECEIVED = None
 STOP_BOOL = False
 DEFAULT_ADDRESS = 75626974  # Parameter that can change
 KEY = 1436  # shared by sensor and gateway
-DATA_ARRAY = []
-
+DATA = None
 # The address is generated and given by gateway during ACK
 
 # Configuration
@@ -43,7 +42,7 @@ def getParity(n):  # return 0 if even, 1 if odd
 
 
 def caesar_encrypt(plain, key):  # only applied to data field
-    # plain = plain.encode('utf-8')
+    #plain = plain.encode('utf-8')
     cipher = bytearray(plain)
     for i, c in enumerate(plain):
         cipher[i] = (ord(c) + key) & 0xff
@@ -84,7 +83,6 @@ def uart_handle():
 
     data_bytes = (uart.read())
     DATA = caesar_encrypt(str(data_bytes, 'utf-8'), KEY)  # encoding & encrypting
-    DATA_ARRAY.append(DATA)
     # radio_send(DATA)
 
 
@@ -168,7 +166,6 @@ def radio_send(msg):  # split the msg into packets of defined length
             print(';Error : Packet segmentation.;')
         PACKET_ID += 1            
 
-i = 0
 
 if __name__ == '__main__':
 
@@ -176,13 +173,10 @@ if __name__ == '__main__':
 
     while not STOP_BOOL:
 
-        DATA = caesar_encrypt('F/1,1,1/2,2,6/1,5,3/4,5,3/2,1,1/3,3,3/2,3,1&I/4,4,4/6,6,6', KEY) # Local TEST
+        # DATA = caesar_encrypt('F/1,1,1/2,2,6/1,5,3/4,5,3/2,1,1/3,3,3/2,3,1&I/4,4,4/6,6,6', KEY) # Local TEST
         if uart.any():  # check if there is anything to be read
             uart_handle()
-            DATA = caesar_encrypt(DATA_ARRAY[i] , KEY)
 
-        # Press button A to send messages
-        if button_a.is_pressed():
             init_connection()
 
             # Sensor keep waiting for a gateway
@@ -193,13 +187,13 @@ if __name__ == '__main__':
                 radio_handle(LAST_PACKET_RECEIVED)
 
                 # GATEWAY_PIN is set by ACK of gateway
-                if (GATEWAY_PIN != None):
+                if (GATEWAY_PIN != None and DATA is not None):
                     radio_send(DATA)
-                    i += 1
                 else:
                     print(';Error : Connection refused;')
             else:
                 print(';Error : No response Timeout;')
+
 
         if button_b.is_pressed():
             print(';Sensor is alive !;')

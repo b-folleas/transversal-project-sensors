@@ -50,7 +50,11 @@ def caesar_decrypt(cipher, key):
     return str(bytes(plain), 'utf-8')
 
 
-def reset_connection():
+def reset_connection(source_pin):
+    global FULL_MESSAGE
+    # Envoi du caractère pour reset le contenu du script python
+    print('$')
+    FULL_MESSAGE = ''
     subMsg = ''
     subMsg_bytes = bytes(subMsg, 'utf-8')
     parity = getParity(int.from_bytes(subMsg_bytes, 2))
@@ -80,7 +84,7 @@ def radio_handle(packet):
     parity = packet[11:12]
     data = packet[12:]
 
-    print('Message received from sensor :' + packet)
+    print(';Message received from sensor :' + packet, ';')
 
     # Checking parity bit for data integrity
     data_bytes = bytes(data, 'utf-8')
@@ -104,6 +108,8 @@ def radio_handle(packet):
                     subMsg_bytes = bytes(caesar_encrypt(str(address), KEY))
                     subMsg = str(subMsg_bytes, 'utf-8') # msg is address encrypted and encoded in hex to be < MSG_MAX_LENGTH
                     parity = getParity(int.from_bytes(subMsg_bytes, 2))
+                    # Lors d'une RST on veut que lors de la SYN le full message soit remis à 0
+                    FULL_MESSAGE = ''
 
                     # Sending response
                     response = GATEWAY_PIN + source_pin + \
@@ -142,7 +148,7 @@ def radio_handle(packet):
                         # check communication_id & packet_id = packet_id +1
                         FULL_MESSAGE = FULL_MESSAGE + msg
                         # delete padding
-                        print('Full message :' + FULL_MESSAGE + '@')
+                        print(FULL_MESSAGE + '@')
                         FULL_MESSAGE = ''
                         
                         PACKET_ID = 0
@@ -152,18 +158,18 @@ def radio_handle(packet):
                     else:
                         print(';Error : Wrong Packet ID :', packet_id,
                             'should be :', PACKET_ID, ';')
-                        reset_connection()
+                        reset_connection(source_pin)
                         # keep the previous COMMUNICATION_ID
                 else:
                     print(';Error : Wrong Communication ID :', communication_id,
                         'should be :', id_2_char(COMMUNICATION_ID) + ';')
             else:
                 print(';Error : Unauthorized Flag.;')
-                reset_connection()
+                reset_connection(source_pin)
         # if the destination_pin is neither the gateway or broadcast, then the packet is for another potential gateway
     else:
         print(';Error : Parity Bit Error ;')
-        reset_connection()
+        reset_connection(source_pin)
         # keep the previous COMMUNICATION_ID
 
 
