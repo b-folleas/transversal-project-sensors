@@ -51,7 +51,10 @@ def caesar_decrypt(cipher, key):
 
 
 def reset_connection(source_pin):
+
     global FULL_MESSAGE
+    global PACKET_ID
+
     # Envoi du caractère pour reset le contenu du script python
     print('$')
     FULL_MESSAGE = ''

@@ -89,7 +89,7 @@ def uart_handle():
 def reset_connection_sensor():
     PACKET_ID = 0
     radio.config(address=DEFAULT_ADDRESS)
-    init_connection('SYN')
+    init_connection()
 
 
 def radio_handle(packet):  # response from gateway
